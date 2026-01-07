@@ -1,3 +1,10 @@
+## 0.17.0
+
+* **🔄 Changed:** Updated get_it to ^9.2.0 (from ^8.0.3).
+* **🔄 Changed:** Updated flutter_lints to ^6.0.0 (from ^5.0.0).
+* **🐛️ Bugfix:** Fixed HTML doc comment warning by wrapping angle brackets in backticks.
+* **🐛️ Bugfix:** Suppressed unused field warnings in example template files.
+
 ## 0.16.2
 
 * **🔄 Changed:** Updated GitHub repository URLs to appboypov organization.
