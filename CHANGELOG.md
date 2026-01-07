@@ -1,3 +1,11 @@
+## 0.16.2
+
+* **🔄 Changed:** Updated GitHub repository URLs to appboypov organization.
+
+## 0.16.1
+
+* Version update to match pub.dev published version.
+
 ## 0.15.0
 
 * **⚠️ Breaking:** Updated get_it to 8.0.3 (from 7.7.0).

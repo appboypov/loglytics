@@ -1,6 +1,6 @@
 name: loglytics
 description: An efficient, user-friendly way to implement logs, analytics and crash reports into your projects.
-version: 0.16.1
+version: 0.16.2
 repository: https://github.com/appboypov/loglytics
 homepage: https://github.com/appboypov/loglytics
 issue_tracker: https://github.com/appboypov/loglytics/issues
