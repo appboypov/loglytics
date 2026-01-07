@@ -3,6 +3,7 @@ import 'package:loglytics/loglytics.dart';
 
 class CrashReportsImplementation implements CrashReportsInterface {
   CrashReportsImplementation(this._yourCrashReportsProvider);
+  // ignore: unused_field
   final Object _yourCrashReportsProvider;
 
   @override

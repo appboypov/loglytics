@@ -2,6 +2,7 @@ import 'package:loglytics/loglytics.dart';
 
 class AnalyticsImplementation implements AnalyticsInterface {
   AnalyticsImplementation(this._yourAnalyticsProvider);
+  // ignore: unused_field
   final Object _yourAnalyticsProvider;
 
   @override
