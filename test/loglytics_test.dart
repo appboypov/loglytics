@@ -1,21 +1,33 @@
+import 'dart:async';
+
 import 'package:loglytics/loglytics.dart';
 import 'package:test/test.dart';
 
-/// A crash reports adapter that keeps what it gets, as a reporter would.
+/// A crash reports adapter that keeps what it gets in order, as a reporter would.
 class _Reporter implements CrashReportsInterface {
-  final breadcrumbs = <String>[];
-  final errors = <(Object?, StackTrace?, bool)>[];
+  _Reporter({this.fails = false});
+
+  /// Whether each call fails, as a reporter that cannot be reached does.
+  final bool fails;
+
+  /// The breadcrumbs as text and the recorded errors as `(error, stack, fatal)`, in order.
+  final events = <Object?>[];
 
   @override
-  Future<void> log(String message) async => breadcrumbs.add(message);
+  Future<void> log(String message) async {
+    if (fails) throw StateError('unreachable');
+    events.add(message);
+  }
 
   @override
   Future<void> recordError(
     exception,
     StackTrace? stack, {
     bool fatal = false,
-  }) async =>
-      errors.add((exception, stack, fatal));
+  }) async {
+    if (fails) throw StateError('unreachable');
+    events.add((exception, stack, fatal));
+  }
 
   @override
   Future<void> setCustomKey(String key, String? value) async {}
@@ -53,20 +65,27 @@ void main() {
     );
   });
 
-  test('an error line holds its error and its stack trace', () {
-    Loglytics.setUp();
+  test('an error line holds its error and its whole stack trace, and its text shows both', () {
+    Loglytics.setUp(maxLinesStackTrace: 1);
     final failure = StateError('disk full');
     final stack = StackTrace.current;
 
     log.error('the write failed', error: failure, stackTrace: stack);
+    final printed = <String>[];
+    runZoned(
+      () => Log.printLine(lines.single),
+      zoneSpecification: ZoneSpecification(print: (_, __, ___, text) => printed.add(text)),
+    );
 
-    expect(lines.single.level, LogLevel.error);
     expect(lines.single.error, same(failure));
-    expect(lines.single.stackTrace.toString(), stack.toString());
-    expect(lines.single.toString(), contains('disk full'));
+    expect(lines.single.stackTrace, same(stack));
+    expect(
+      printed.single,
+      allOf(contains('$failure'), contains('$stack'.split('\n').first)),
+    );
   });
 
-  test('the crash reports adapter gets the recorded error and the lines before it', () async {
+  test('the crash report gets the lines before it and then the recorded error', () async {
     final reporter = _Reporter();
     Loglytics.setUp(crashReportsInterface: reporter);
     final failure = StateError('disk full');
@@ -76,7 +95,24 @@ void main() {
     log.fatal('the write failed', error: failure, stackTrace: stack);
     await Future<void>.delayed(Duration.zero);
 
-    expect(reporter.errors, [(failure, stack, true)]);
-    expect(reporter.breadcrumbs.first, contains('read 3 files'));
+    expect(reporter.events, [
+      contains('read 3 files'),
+      contains('the write failed'),
+      (failure, stack, true),
+    ]);
+  });
+
+  test('a reporter that fails stops neither the log nor the process', () async {
+    final uncaught = <Object>[];
+
+    await runZonedGuarded(() async {
+      Loglytics.setUp(crashReportsInterface: _Reporter(fails: true));
+      log.info('read 3 files');
+      log.error('the write failed', error: StateError('disk full'));
+      await Future<void>.delayed(Duration.zero);
+    }, (error, _) => uncaught.add(error));
+
+    expect(uncaught, isEmpty);
+    expect(lines.map((line) => line.level), [LogLevel.info, LogLevel.error]);
   });
 }

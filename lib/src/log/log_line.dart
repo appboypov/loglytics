@@ -13,18 +13,19 @@ class LogLine {
     this.tag,
     this.error,
     this.stackTrace,
+    this.stackLinesInText,
   });
 
-  /// When the line was written, in UTC.
+  /// The moment of the line, in UTC.
   final DateTime time;
 
   /// How much the line matters.
   final LogLevel level;
 
-  /// The part of the program that wrote the line.
+  /// The part of the program that writes the line.
   final String location;
 
-  /// What happened.
+  /// What the line tells.
   final String message;
 
   /// An optional tag that groups lines across locations.
@@ -33,13 +34,25 @@ class LogLine {
   /// The error of an error line.
   final Object? error;
 
-  /// The stack trace of an error line.
+  /// The whole stack trace of an error line.
   final StackTrace? stackTrace;
 
+  /// How many lines of [stackTrace] the text shows: all of them when null and none when 0.
+  final int? stackLinesInText;
+
+  /// The level, location and tag in front of the message and the error in the text.
+  String get _prefix => '${level.iconTag} [$location] ${tag != null ? '[$tag] ' : ''}';
+
   @override
-  String toString() => [
-        '${level.iconTag} [$location] ${tag != null ? '[$tag] ' : ''}$message',
-        if (error != null) '$error',
-        if (stackTrace != null) '$stackTrace'.trimRight(),
-      ].join('\n');
+  String toString() {
+    final stackLines = '${stackTrace ?? ''}'.trimRight().split('\n').where((l) => l.isNotEmpty);
+    return [
+      '$_prefix$message',
+      if (error != null) '$_prefix$error',
+      ...switch (stackLinesInText) {
+        null => stackLines,
+        final count => stackLines.take(count),
+      },
+    ].join('\n');
+  }
 }

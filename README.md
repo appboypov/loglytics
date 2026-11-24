@@ -100,9 +100,19 @@ Loglytics.setUp(
 Each log line goes to `Log.output` as a `LogLine` with its time, level, location, message and, for an error, its error and stack trace. It prints the line when nothing else is set. Set it once at the start of the process to send the lines somewhere else, such as a file:
 
 ```dart
-final file = File('app.log').openWrite(mode: FileMode.append);
-Log.output = (line) => file.writeln('${line.time.toIso8601String()} $line');
+import 'dart:io';
+
+import 'package:loglytics/loglytics.dart';
+
+Future<void> main() async {
+  final file = File('app.log').openWrite(mode: FileMode.append);
+  Log.output = (line) => file.writeln('${line.time.toIso8601String()} $line');
+  Log(location: 'Main').info('The program starts.');
+  await file.close();
+}
 ```
+
+A Flutter app that wants the lines in `debugPrint` sets `Log.output = (line) => debugPrint('$line');`.
 
 # **📈 How do I send analytics (and crash reports)?**
 

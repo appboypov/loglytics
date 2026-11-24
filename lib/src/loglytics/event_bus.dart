@@ -17,9 +17,9 @@ class EventBus {
   void tryAddCrashReport(Future<void>? crashReport) {
     if (crashReport != null) {
       if (Loglytics._combineEvents) {
-        _combinedEvents.add(crashReport);
+        _combinedEvents.add(_send(crashReport));
       } else {
-        _crashReports.add(crashReport);
+        _crashReports.add(_send(crashReport));
       }
     }
   }
@@ -28,9 +28,9 @@ class EventBus {
   void tryAddAnalytic(Future<void>? analytic) {
     if (analytic != null) {
       if (Loglytics._combineEvents) {
-        _combinedEvents.add(analytic);
+        _combinedEvents.add(_send(analytic));
       } else {
-        _analytics.add(analytic);
+        _analytics.add(_send(analytic));
       }
     }
   }
@@ -46,62 +46,27 @@ class EventBus {
   }
 
   /// Used to start listening to the event streams.
-  void _listen() async {
+  void _listen() {
     if (Loglytics._combineEvents) {
       if (!_combinedEvents.hasListener && _combinedEventsSubscription == null) {
-        _combinedEventsSubscription = _combinedEvents.stream.listen(
-          (future) async => await future,
-          onError: (error, stackTrace) async {
-            const message = '[EventBus] Combined events stream caught an error!';
-            _write(LogLevel.error, message);
-            await Loglytics._crashReportsInterface?.log(message);
-            await Loglytics._crashReportsInterface?.recordError(error, stackTrace, fatal: true);
-          },
-          onDone: () async {
-            const message = '[EventBus] Combined events stream is done!';
-            _write(LogLevel.info, message);
-            await Loglytics._crashReportsInterface?.log(message);
-          },
-        );
+        _combinedEventsSubscription = _combinedEvents.stream.listen(_send);
       }
     } else {
       if (!_crashReports.hasListener && _crashReportsSubscription == null) {
-        _crashReportsSubscription ??= _crashReports.stream.listen(
-          (future) async => await future,
-          onError: (error, stackTrace) async {
-            const message = '[EventBus] CrashReports events stream caught an error!';
-            _write(LogLevel.error, message);
-            await Loglytics._crashReportsInterface?.log(message);
-            await Loglytics._crashReportsInterface?.recordError(error, stackTrace, fatal: true);
-          },
-          onDone: () async {
-            const message = '[EventBus] CrashReports events stream is done!';
-            _write(LogLevel.info, message);
-            await Loglytics._crashReportsInterface?.log(message);
-          },
-        );
+        _crashReportsSubscription = _crashReports.stream.listen(_send);
       }
       if (!_analytics.hasListener && _analyticsSubscription == null) {
-        _analyticsSubscription ??= _analytics.stream.listen(
-          (future) async => await future,
-          onError: (error, stackTrace) async {
-            const message = '[EventBus] Analytics events stream caught an error!';
-            _write(LogLevel.error, message);
-            await Loglytics._crashReportsInterface?.log(message);
-            await Loglytics._crashReportsInterface?.recordError(error, stackTrace, fatal: true);
-          },
-          onDone: () async {
-            const message = '[EventBus] Analytics events stream is done!';
-            _write(LogLevel.info, message);
-            await Loglytics._crashReportsInterface?.log(message);
-          },
-        );
+        _analyticsSubscription = _analytics.stream.listen(_send);
       }
     }
   }
 
-  /// Writes [message] of the event bus itself to [Log.output].
-  void _write(LogLevel level, String message) => Log.output(
-        LogLine(time: DateTime.now().toUtc(), level: level, location: 'EventBus', message: message),
-      );
+  /// Waits for [report] and drops its failure, so a reporter that fails never stops the program.
+  static Future<void> _send(Future<void> report) async {
+    try {
+      await report;
+    } catch (_) {
+      // The reporter decides how it fails; loglytics carries on.
+    }
+  }
 }
