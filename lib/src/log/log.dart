@@ -31,6 +31,13 @@ class Log {
   /// Used to toggle broadcasting logs on or off.
   static bool broadcastLogs = false;
 
+  /// Receives each [LogLine] that a [Log] writes. The process sets it once at its start, such as
+  /// to write lines to a file. It is [printLine] when nothing is set.
+  static void Function(LogLine line) output = printLine;
+
+  /// Prints [line] as text to standard output, after its time when [logTime] is true.
+  static void printLine(LogLine line) => print('${logTime ? '$time ' : ''}$line');
+
   /// Used to expose all crash reports logs.
   static final StreamController<String> crashReportsObserver = StreamController.broadcast();
 
@@ -39,7 +46,7 @@ class Log {
 
   // --------------- REGULAR --------------- REGULAR --------------- REGULAR --------------- \\
 
-  /// Logs a trace [message] with [LogLevel.trace] default as [debugPrint].
+  /// Logs a trace [message] with [LogLevel.trace] to [Log.output].
   ///
   /// Also tries to send the log to your [CrashReportsInterface] implementation should you have
   /// configured one with the [Loglytics.setUp] method.
@@ -60,7 +67,7 @@ class Log {
     );
   }
 
-  /// Logs a debug [message] with [LogLevel.debug] as [debugPrint].
+  /// Logs a debug [message] with [LogLevel.debug] to [Log.output].
   ///
   /// Also tries to send the log to your [CrashReportsInterface] implementation should you have
   /// configured one with the [Loglytics.setUp] method.
@@ -80,7 +87,7 @@ class Log {
     );
   }
 
-  /// Logs an info [message] with [LogLevel.info] default as [debugPrint].
+  /// Logs an info [message] with [LogLevel.info] to [Log.output].
   ///
   /// Also tries to send the log to your [CrashReportsInterface] implementation should you have
   /// configured one with the [Loglytics.setUp] method.
@@ -101,7 +108,7 @@ class Log {
     );
   }
 
-  /// Logs an analytic [name] with [LogLevel.analytic] as [debugPrint].
+  /// Logs an analytic [name] with [LogLevel.analytic] to [Log.output].
   ///
   /// Also tries to send the log to your [CrashReportsInterface] implementation should you have
   /// configured one with the [Loglytics.setUp] method.
@@ -127,7 +134,7 @@ class Log {
     if (broadcastLogs) analyticsObserver.add(message);
   }
 
-  /// Logs a warning [message] with [LogLevel.warning] as [debugPrint].
+  /// Logs a warning [message] with [LogLevel.warning] to [Log.output].
   ///
   /// Also tries to send the log to your [CrashReportsInterface] implementation should you have
   /// configured one with the [Loglytics.setUp] method.
@@ -148,7 +155,8 @@ class Log {
     );
   }
 
-  /// Logs an error [message] with [LogLevel.error] as [debugPrint].
+  /// Logs an error [message] with [LogLevel.error] to [Log.output], with its [error] and its
+  /// stack trace when [printStack] is true.
   ///
   /// Also tries to send the log with optional [error], [stackTrace] and [fatal] boolean to your
   /// [CrashReportsInterface] implementation should you have configured one with the
@@ -191,25 +199,20 @@ class Log {
       addToCrashReports: addToCrashReports,
       location: location,
       tag: tag,
+      error: error,
+      stackTrace: printStack ? _trimmed(localStackTrace) : null,
     );
-    if (hasError) {
-      _logMessage(
-        message: error.toString(),
-        logLevel: logLevel,
-        addToCrashReports: false,
-        location: location,
-        tag: tag,
-      );
-    }
-    if (printStack) {
-      debugPrintStack(
-        stackTrace: stackTrace,
-        maxFrames: _maxLinesStackTrace,
-      );
-    }
   }
 
-  /// Logs a fatal [message] with [LogLevel.fatal] as [debugPrint].
+  /// Keeps the first [_maxLinesStackTrace] lines of [stackTrace], or all of them when no maximum
+  /// is set.
+  StackTrace _trimmed(StackTrace stackTrace) {
+    final maxLines = _maxLinesStackTrace;
+    if (maxLines == null) return stackTrace;
+    return StackTrace.fromString(stackTrace.toString().split('\n').take(maxLines).join('\n'));
+  }
+
+  /// Logs a fatal [message] with [LogLevel.fatal] to [Log.output].
   ///
   /// Also tries to send the log with optional [error], [stackTrace] and [fatal] boolean to your
   /// [CrashReportsInterface] implementation should you have configured one with the
@@ -248,18 +251,24 @@ class Log {
     bool addToCrashReports = true,
     String? location,
     String? tag,
+    Object? error,
+    StackTrace? stackTrace,
   }) {
     final localTag = tag ?? _tag;
     if (addToCrashReports) {
       _tryLogCrashReportMessage(message, logLevel, localTag);
     }
-    final localMessage = '${Log.logTime ? '$time ' : ''}'
-        '${logLevel.iconTag} '
-        '${'[${location ?? _location}]'} '
-        '${localTag != null ? '[$localTag] ' : ''}'
-        '$message';
-    if (broadcastLogs) crashReportsObserver.add(localMessage);
-    debugPrint(localMessage);
+    final line = LogLine(
+      time: DateTime.now().toUtc(),
+      level: logLevel,
+      location: location ?? _location,
+      message: message,
+      tag: localTag,
+      error: error,
+      stackTrace: stackTrace,
+    );
+    if (broadcastLogs) crashReportsObserver.add('${Log.logTime ? '$time ' : ''}$line');
+    output(line);
   }
 
   // --------------- CRASH REPORTS --------------- CRASH REPORTS --------------- CRASH REPORTS --------------- \\

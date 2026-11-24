@@ -1,6 +1,6 @@
 name: loglytics
 description: An efficient, user-friendly way to implement logs, analytics and crash reports into your projects.
-version: 0.17.0
+version: 0.18.0
 repository: https://github.com/appboypov/loglytics
 homepage: https://github.com/appboypov/loglytics
 issue_tracker: https://github.com/appboypov/loglytics/issues
@@ -9,14 +9,9 @@ environment:
   sdk: ">=3.3.0 <4.0.0"
 
 dependencies:
-  flutter:
-    sdk: flutter
-
   get_it: ^9.2.0
+  meta: ^1.15.0
 
 dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  flutter_lints: ^6.0.0
-
-flutter:
+  lints: ^6.0.0
+  test: ^1.25.0

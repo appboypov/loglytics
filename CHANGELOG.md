@@ -1,3 +1,9 @@
+## 0.18.0
+
+* **⚠️ Breaking:** loglytics no longer depends on Flutter and works in any Dart program.
+* **✨ New:** Each log line goes to `Log.output` as a `LogLine` with its time, level, location, message and, for an error, its error and stack trace. `Log.output` prints the line when nothing else is set.
+* **🔄 Changed:** An error line holds its error and its stack trace in one `LogLine` in place of three printed lines.
+
 ## 0.17.0
 
 * **🔄 Changed:** Updated get_it to ^9.2.0 (from ^8.0.3).
