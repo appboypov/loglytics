@@ -5,5 +5,5 @@ extension on DateTime {
       '${second < 10 ? '0$second' : second}';
 }
 
-/// Used to specify the time in each log.
-String get time => '[${DateTime.now().hourMinuteSecond}]';
+/// The local time of [moment] as it shows in front of a log line.
+String timeOf(DateTime moment) => '[${moment.toLocal().hourMinuteSecond}]';

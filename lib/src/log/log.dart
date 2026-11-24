@@ -36,7 +36,7 @@ class Log {
   static void Function(LogLine line) output = printLine;
 
   /// Prints [line] as text to standard output, after its time when [logTime] is true.
-  static void printLine(LogLine line) => print('${logTime ? '$time ' : ''}$line');
+  static void printLine(LogLine line) => print('${logTime ? '${timeOf(line.time)} ' : ''}$line');
 
   /// Used to expose all crash reports logs.
   static final StreamController<String> crashReportsObserver = StreamController.broadcast();
@@ -183,8 +183,17 @@ class Log {
     } catch (error) {
       localStackTrace = StackTrace.current;
     }
-    final hasError = error != null;
-    if (hasError || forceRecordError) {
+    _logMessage(
+      message: message,
+      logLevel: logLevel,
+      addToCrashReports: addToCrashReports,
+      location: location,
+      tag: tag,
+      error: error,
+      stackTrace: localStackTrace,
+      stackLinesInText: printStack ? _maxLinesStackTrace : 0,
+    );
+    if (error != null || forceRecordError) {
       _eventBus.tryAddCrashReport(
         Loglytics._crashReportsInterface?.recordError(
           error,
@@ -193,23 +202,6 @@ class Log {
         ),
       );
     }
-    _logMessage(
-      message: message,
-      logLevel: logLevel,
-      addToCrashReports: addToCrashReports,
-      location: location,
-      tag: tag,
-      error: error,
-      stackTrace: printStack ? _trimmed(localStackTrace) : null,
-    );
-  }
-
-  /// Keeps the first [_maxLinesStackTrace] lines of [stackTrace], or all of them when no maximum
-  /// is set.
-  StackTrace _trimmed(StackTrace stackTrace) {
-    final maxLines = _maxLinesStackTrace;
-    if (maxLines == null) return stackTrace;
-    return StackTrace.fromString(stackTrace.toString().split('\n').take(maxLines).join('\n'));
   }
 
   /// Logs a fatal [message] with [LogLevel.fatal] to [Log.output].
@@ -253,6 +245,7 @@ class Log {
     String? tag,
     Object? error,
     StackTrace? stackTrace,
+    int? stackLinesInText,
   }) {
     final localTag = tag ?? _tag;
     if (addToCrashReports) {
@@ -266,8 +259,13 @@ class Log {
       tag: localTag,
       error: error,
       stackTrace: stackTrace,
+      stackLinesInText: stackLinesInText,
     );
-    if (broadcastLogs) crashReportsObserver.add('${Log.logTime ? '$time ' : ''}$line');
+    if (broadcastLogs) {
+      final time = Log.logTime ? '${timeOf(line.time)} ' : '';
+      crashReportsObserver.add('$time${line._prefix}$message');
+      if (error != null) crashReportsObserver.add('$time${line._prefix}$error');
+    }
     output(line);
   }
 

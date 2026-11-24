@@ -1,8 +1,10 @@
 ## 0.18.0
 
-* **⚠️ Breaking:** loglytics no longer depends on Flutter and works in any Dart program.
-* **✨ New:** Each log line goes to `Log.output` as a `LogLine` with its time, level, location, message and, for an error, its error and stack trace. `Log.output` prints the line when nothing else is set.
-* **🔄 Changed:** An error line holds its error and its stack trace in one `LogLine` in place of three printed lines.
+* **⚠️ Breaking:** loglytics no longer depends on Flutter and works in any Dart program. Log lines go to `Log.output` in place of Flutter's `debugPrint` and `debugPrintStack`. `Log.output` prints each line when nothing else is set.
+* **✨ New:** `LogLine` holds the time, level, location, tag and message of a line and, for an error, its error and its whole stack trace. `maxLinesStackTrace` and `printStack` limit only the stack lines of its text.
+* **🔄 Changed:** An error goes to `Log.output` as one `LogLine`, whose text shows the message, the error and the stack trace on lines after each other.
+* **🔄 Changed:** The crash reports adapter gets the message of an error as a breadcrumb before the recorded error, so the report holds it.
+* **🐛️ Bugfix:** A crash reports or analytics adapter that fails no longer gives an uncaught error.
 
 ## 0.17.0
 
