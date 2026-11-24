@@ -1,3 +1,7 @@
+## 0.18.1
+
+* **✨ New:** `Log.warning` takes the `error` and `stackTrace` of a failure that the program recovers from. Its `LogLine` holds both, and it records no error in the crash reports adapter.
+
 ## 0.18.0
 
 * **⚠️ Breaking:** loglytics no longer depends on Flutter and works in any Dart program. Log lines go to `Log.output` in place of Flutter's `debugPrint` and `debugPrintStack`. `Log.output` prints each line when nothing else is set.

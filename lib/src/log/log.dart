@@ -134,12 +134,15 @@ class Log {
     if (broadcastLogs) analyticsObserver.add(message);
   }
 
-  /// Logs a warning [message] with [LogLevel.warning] to [Log.output].
+  /// Logs a warning [message] with [LogLevel.warning] to [Log.output], with the [error] and
+  /// [stackTrace] of a failure that the program recovers from.
   ///
   /// Also tries to send the log to your [CrashReportsInterface] implementation should you have
-  /// configured one with the [Loglytics.setUp] method.
+  /// configured one with the [Loglytics.setUp] method. A warning records no error there.
   void warning(
     String message, {
+    Object? error,
+    StackTrace? stackTrace,
     bool addToCrashReports = true,
     String? location,
     String? tag,
@@ -152,6 +155,9 @@ class Log {
       addToCrashReports: addToCrashReports,
       location: location,
       tag: tag,
+      error: error,
+      stackTrace: stackTrace,
+      stackLinesInText: _maxLinesStackTrace,
     );
   }
 
