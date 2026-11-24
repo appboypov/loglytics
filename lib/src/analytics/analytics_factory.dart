@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:meta/meta.dart';
 import 'package:get_it/get_it.dart';
 import 'package:loglytics/loglytics.dart';
 

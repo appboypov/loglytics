@@ -53,13 +53,13 @@ class EventBus {
           (future) async => await future,
           onError: (error, stackTrace) async {
             const message = '[EventBus] Combined events stream caught an error!';
-            debugPrint(message);
+            _write(LogLevel.error, message);
             await Loglytics._crashReportsInterface?.log(message);
             await Loglytics._crashReportsInterface?.recordError(error, stackTrace, fatal: true);
           },
           onDone: () async {
             const message = '[EventBus] Combined events stream is done!';
-            debugPrint(message);
+            _write(LogLevel.info, message);
             await Loglytics._crashReportsInterface?.log(message);
           },
         );
@@ -70,13 +70,13 @@ class EventBus {
           (future) async => await future,
           onError: (error, stackTrace) async {
             const message = '[EventBus] CrashReports events stream caught an error!';
-            debugPrint(message);
+            _write(LogLevel.error, message);
             await Loglytics._crashReportsInterface?.log(message);
             await Loglytics._crashReportsInterface?.recordError(error, stackTrace, fatal: true);
           },
           onDone: () async {
             const message = '[EventBus] CrashReports events stream is done!';
-            debugPrint(message);
+            _write(LogLevel.info, message);
             await Loglytics._crashReportsInterface?.log(message);
           },
         );
@@ -86,17 +86,22 @@ class EventBus {
           (future) async => await future,
           onError: (error, stackTrace) async {
             const message = '[EventBus] Analytics events stream caught an error!';
-            debugPrint(message);
+            _write(LogLevel.error, message);
             await Loglytics._crashReportsInterface?.log(message);
             await Loglytics._crashReportsInterface?.recordError(error, stackTrace, fatal: true);
           },
           onDone: () async {
             const message = '[EventBus] Analytics events stream is done!';
-            debugPrint(message);
+            _write(LogLevel.info, message);
             await Loglytics._crashReportsInterface?.log(message);
           },
         );
       }
     }
   }
+
+  /// Writes [message] of the event bus itself to [Log.output].
+  void _write(LogLevel level, String message) => Log.output(
+        LogLine(time: DateTime.now().toUtc(), level: level, location: 'EventBus', message: message),
+      );
 }

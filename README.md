@@ -95,6 +95,15 @@ Loglytics.setUp(
   );
 ```
 
+### **Output**
+
+Each log line goes to `Log.output` as a `LogLine` with its time, level, location, message and, for an error, its error and stack trace. It prints the line when nothing else is set. Set it once at the start of the process to send the lines somewhere else, such as a file:
+
+```dart
+final file = File('app.log').openWrite(mode: FileMode.append);
+Log.output = (line) => file.writeln('${line.time.toIso8601String()} $line');
+```
+
 # **📈 How do I send analytics (and crash reports)?**
 
 Next we need to determine how we want to implement the feature-like way of specifying analytics in our project. In any case, it is important that we can define parts of our project (such as a feature) and link them to subjects and parameters for that specific part (or feature). Once we are clear on how we want to do this, we can set up our first implementation of an `Analytics` object. See below for an example of what an implementation for a login feature with one subject and one parameter looks like.
