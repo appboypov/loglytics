@@ -85,6 +85,20 @@ void main() {
     );
   });
 
+  test('a warning line holds its error and stack trace and records no crash report', () async {
+    final reporter = _Reporter();
+    Loglytics.setUp(crashReportsInterface: reporter);
+    final failure = StateError('rate limited');
+    final stack = StackTrace.current;
+
+    log.warning('the read waits a minute', error: failure, stackTrace: stack);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(lines.single.error, same(failure));
+    expect(lines.single.stackTrace, same(stack));
+    expect(reporter.events, [contains('the read waits a minute')]);
+  });
+
   test('the crash report gets the lines before it and then the recorded error', () async {
     final reporter = _Reporter();
     Loglytics.setUp(crashReportsInterface: reporter);
